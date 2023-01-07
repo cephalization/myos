@@ -1,5 +1,6 @@
 import { motion, Reorder } from "framer-motion";
-import type { ComponentPropsWithRef, PropsWithChildren } from "react";
+import type { ComponentPropsWithRef } from "react";
+import { useRef } from "react";
 import { useState } from "react";
 
 const pathProps = {
@@ -12,7 +13,18 @@ const pathProps = {
     visibility: "visible",
     transition: {
       duration: 1,
-      delay: 0.2,
+      delay: 0.7,
+    },
+  },
+} as const;
+
+const svgProps = {
+  variants: {
+    tap: {
+      scale: 1.5,
+    },
+    hover: {
+      scale: 1.2,
     },
   },
 } as const;
@@ -28,15 +40,26 @@ const Item = ({ children, ...props }: ItemProps) => (
       hidden: { opacity: 0 },
       visible: { opacity: 1 },
       hover: {
-        scale: 1.5,
+        height: "2rem",
+        width: "2rem",
       },
       tap: {
-        scale: 1.8,
+        height: "3rem",
+        width: "3rem",
       },
     }}
-    className="relative"
+    onClick={() => {}}
+    className="relative hover:cursor-pointer flex items-center justify-center h-6 w-6 shadow-xl"
+    dragElastic={0.3}
   >
-    <div className="absolute inset-0 scale-125 rounded-full bg-slate-800" />
+    <motion.div
+      initial={{ backgroundColor: "rgb(100 116 139)" }}
+      animate={{
+        backgroundColor: "rgb(30 41 59)",
+        transition: { delay: 0.6, ease: "easeInOut", duration: 0.3 },
+      }}
+      className="absolute inset-0 scale-125 rounded-full"
+    />
 
     {children}
   </Reorder.Item>
@@ -51,6 +74,7 @@ const CodeItem = (props: ItemProps) => (
       strokeWidth={1.5}
       stroke="currentColor"
       className="w-6 h-6 relative"
+      {...svgProps}
     >
       <motion.path
         strokeLinecap="round"
@@ -71,6 +95,7 @@ const MusicItem = (props: ItemProps) => (
       strokeWidth={1.5}
       stroke="currentColor"
       className="w-6 h-6 relative"
+      {...svgProps}
     >
       <motion.path
         strokeLinecap="round"
@@ -91,6 +116,7 @@ const HomeItem = (props: ItemProps) => (
       strokeWidth={1.5}
       stroke="currentColor"
       className="w-6 h-6 relative"
+      {...svgProps}
     >
       <motion.path
         strokeLinecap="round"
@@ -109,14 +135,16 @@ const defaultItems: [string, (props: ItemProps) => JSX.Element][] = [
 ];
 
 const Dock = () => {
+  const navRef = useRef<HTMLElement>(null);
   const [items, setItems] = useState(defaultItems);
 
   return (
     <motion.nav
       layout
-      className="flex h-16 mt-8 mx-auto rounded-2xl border-slate-800 bg-slate-900 border-2"
+      className="flex h-12 mt-8 mx-auto rounded-3xl border-slate-800 bg-slate-900 border-2"
       initial="hidden"
       animate="visible"
+      ref={navRef}
       variants={{
         hidden: {
           opacity: 0,
@@ -128,21 +156,42 @@ const Dock = () => {
           opacity: 1,
           transition: {
             when: "beforeChildren",
-            delay: 0.5,
-            staggerChildren: 1,
+            delay: 0.1,
+            duration: 0.6,
+            staggerChildren: 0.2,
+            ease: "easeIn",
           },
         },
       }}
     >
       <Reorder.Group
-        className="flex h-full w-full items-center justify-center px-4 text-slate-400 gap-4"
+        layout
+        className="flex h-full w-full items-center justify-center px-3 text-slate-400 gap-4"
         axis="x"
         values={[...items]}
         onReorder={setItems}
+        variants={{
+          hidden: {
+            opacity: 0,
+            transition: {
+              when: "afterChildren",
+            },
+          },
+          visible: {
+            opacity: 1,
+            transition: {
+              when: "beforeChildren",
+              delay: 0.1,
+              duration: 0.8,
+              staggerChildren: 0.5,
+              ease: "easeIn",
+            },
+          },
+        }}
       >
         {items.map((item) => {
           const [key, Component] = item;
-          return <Component key={key} value={item} />;
+          return <Component key={key} value={item} dragConstraints={navRef} />;
         })}
       </Reorder.Group>
     </motion.nav>
